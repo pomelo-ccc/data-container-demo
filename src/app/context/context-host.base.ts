@@ -1,4 +1,4 @@
-import { inject, Directive, Input, OnInit } from '@angular/core';
+import { inject, Directive, OnInit } from '@angular/core';
 import { ComponentContext } from './component-context.service';
 
 /**
@@ -11,7 +11,7 @@ import { ComponentContext } from './component-context.service';
  * @Component({
  *   providers: [ComponentContext]
  * })
- * export class MyComponent extends ContextAware {
+ * export class MyComponent extends ContextHost {
  *   override contextType = 'form';  // 设置类型
  *
  *   doSomething() {
@@ -25,9 +25,9 @@ import { ComponentContext } from './component-context.service';
  * ```
  */
 @Directive()
-export abstract class ContextAware implements OnInit {
+export abstract class ContextHost implements OnInit {
     /** 组件上下文 */
-    protected readonly ctx = inject(ComponentContext);
+    readonly ctx = inject(ComponentContext);
 
     /** 组件类型（子类可覆盖） */
     protected contextType = 'component';

@@ -8,7 +8,7 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { WidgetSchema } from '../../models/schema.interface';
 import { ScopeService } from '../../services/scope.service';
-import { ComponentContext, ContextAware } from '../../../context';
+import { ComponentContext, ContextHost } from '../../../context';
 
 /**
  * 列表项字段映射
@@ -154,7 +154,7 @@ export interface ListWidgetProps {
     }
   `]
 })
-export class ListWidgetComponent extends ContextAware {
+export class ListWidgetComponent extends ContextHost {
   override contextType = 'list';
 
   /** Schema 配置 */

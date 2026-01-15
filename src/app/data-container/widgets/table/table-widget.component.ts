@@ -7,7 +7,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { WidgetSchema } from '../../models/schema.interface';
 import { ScopeService } from '../../services/scope.service';
-import { ComponentContext, ContextAware } from '../../../context';
+import { ComponentContext, ContextHost } from '../../../context';
 
 /**
  * 表格列配置
@@ -136,7 +136,7 @@ export interface TableWidgetProps {
     }
   `]
 })
-export class TableWidgetComponent extends ContextAware implements OnDestroy {
+export class TableWidgetComponent extends ContextHost implements OnDestroy {
   override contextType = 'table';
 
   /** Schema 配置 */

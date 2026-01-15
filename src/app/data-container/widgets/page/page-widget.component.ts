@@ -17,7 +17,7 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
 import { WidgetSchema } from '../../models/schema.interface';
 import { ScopeService } from '../../services/scope.service';
 import { DataSourceService } from '../../services/data-source.service';
-import { ComponentContext, ContextAware } from '../../../context';
+import { ComponentContext, ContextHost } from '../../../context';
 import { SchemaRendererComponent } from '../../renderer/schema-renderer.component';
 
 /**
@@ -167,7 +167,7 @@ export interface PageWidgetProps {
     }
   `]
 })
-export class PageWidgetComponent extends ContextAware implements OnDestroy {
+export class PageWidgetComponent extends ContextHost implements OnDestroy {
   override contextType = 'page';
 
   /** Schema 配置 */

@@ -25,7 +25,7 @@ import { ScopeService } from '../services/scope.service';
 import { ModelService } from '../services/model.service';
 import { DataSourceService } from '../services/data-source.service';
 import { SchemaRendererComponent } from '../renderer/schema-renderer.component';
-import { ComponentContext, ContextAware } from '../../context';
+import { ComponentContext, ContextHost } from '../../context';
 import { LayoutRendererComponent } from '../layouts/layout-renderer.component';
 
 /**
@@ -128,7 +128,7 @@ import { LayoutRendererComponent } from '../layouts/layout-renderer.component';
     }
   `]
 })
-export class ContainerComponent extends ContextAware implements OnInit, OnDestroy {
+export class ContainerComponent extends ContextHost implements OnInit, OnDestroy {
   override contextType = 'container';
   /** 通过名称加载模型 */
   @Input() set modelName(name: string) {

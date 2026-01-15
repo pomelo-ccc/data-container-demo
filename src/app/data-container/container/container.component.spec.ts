@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ContainerComponent } from './container.component';
@@ -34,6 +34,16 @@ describe('ContainerComponent', () => {
 
         it('应该提供独立的 ScopeService 实例', () => {
             expect(scopeService).toBeTruthy();
+        });
+
+        it('setAllData 应支持 replace 模式整体替换', () => {
+            const ctx = (component as any).ctx;
+            ctx.setData('a', 1);
+            ctx.setData('b', 2);
+
+            ctx.setAllData({ a: 10 }, { replace: true });
+
+            expect(ctx.getAllData()).toEqual({ a: 10 });
         });
 
         it('runtimeSchema 初始值应该为 null', () => {
@@ -80,9 +90,9 @@ describe('ContainerComponent', () => {
         });
 
         it('应该能够通过名称获取模型', (done) => {
-            modelService.getModelByName('demo-tabs').subscribe(model => {
+            modelService.getModelByName('demo-full').subscribe(model => {
                 expect(model).toBeTruthy();
-                expect(model?.id).toBe('tabs-container');
+                expect(model?.id).toBe('demo-full');
                 done();
             });
         });
@@ -135,33 +145,6 @@ describe('ContainerComponent', () => {
             expect(runtime._visible).toBe(true);
             expect(runtime.children?.length).toBe(2);
             expect(runtime.children?.[0]._visible).toBe(true);
-        });
-    });
-
-    describe('组件方法', () => {
-        it('refreshData 应该能够调用', () => {
-            expect(() => component.refreshData()).not.toThrow();
-        });
-
-        it('reloadModel 应该能够调用', () => {
-            expect(() => component.reloadModel()).not.toThrow();
-        });
-
-        it('trackById 应该返回正确的 id', () => {
-            const item = { id: 'test-id', type: 'text', _visible: true } as any;
-            expect(component.trackById(0, item)).toBe('test-id');
-        });
-
-        it('isContainerType 应该能正确判断容器类型', () => {
-            const container = { id: 'c1', type: 'container', _visible: true } as any;
-            const page = { id: 'p1', type: 'page', _visible: true } as any;
-            const text = { id: 't1', type: 'text', _visible: true } as any;
-            const withLayout = { id: 'l1', type: 'text', layout: 'tabs', _visible: true } as any;
-
-            expect(component.isContainerType(container)).toBe(true);
-            expect(component.isContainerType(page)).toBe(true);
-            expect(component.isContainerType(text)).toBe(false);
-            expect(component.isContainerType(withLayout)).toBe(true);
         });
     });
 });

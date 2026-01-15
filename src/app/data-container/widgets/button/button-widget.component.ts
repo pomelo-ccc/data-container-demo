@@ -6,7 +6,7 @@ import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { WidgetSchema } from '../../models/schema.interface';
 import { ScopeService } from '../../services/scope.service';
-import { ComponentContext, ContextAware, ComponentRegistry } from '../../../context';
+import { ComponentContext, ContextHost, ComponentRegistry } from '../../../context';
 
 /**
  * 按钮项配置
@@ -145,7 +145,7 @@ export interface ButtonWidgetProps {
     }
   `]
 })
-export class ButtonWidgetComponent extends ContextAware implements OnDestroy {
+export class ButtonWidgetComponent extends ContextHost implements OnDestroy {
   /** 注入 Registry 用于测试 */
   private readonly registry = inject(ComponentRegistry);
 

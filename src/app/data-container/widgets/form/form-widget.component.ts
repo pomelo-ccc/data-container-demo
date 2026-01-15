@@ -11,7 +11,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { WidgetSchema } from '../../models/schema.interface';
 import { ScopeService } from '../../services/scope.service';
-import { ComponentContext, ContextAware } from '../../../context';
+import { ComponentContext, ContextHost } from '../../../context';
 
 /**
  * 表单项配置
@@ -203,7 +203,7 @@ export interface FormWidgetProps {
     }
   `]
 })
-export class FormWidgetComponent extends ContextAware implements OnDestroy {
+export class FormWidgetComponent extends ContextHost implements OnDestroy {
   override contextType = 'form';
 
   /** Schema 配置 */
@@ -475,4 +475,3 @@ export class FormWidgetComponent extends ContextAware implements OnDestroy {
     this.syncFormValuesToContext(this.initialValues);
   }
 }
-
