@@ -14,3 +14,6 @@ export { ComponentRegistry } from './component-registry.service';
 
 // Base Class
 export { ContextHost } from './context-host.base';
+
+// Pipes
+export { ContextExprPipe } from './context-expr.pipe';

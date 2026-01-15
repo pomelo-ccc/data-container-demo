@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
-import { ComponentContext, ContextHost } from '../../context';
+import { ComponentContext, ContextExprPipe, ContextHost } from '../../context';
 import { DynamicFieldComponent, ExpressionMap } from './field.component';
 import { DynamicFieldInputComponent } from './field-input.component';
 import {
@@ -25,6 +25,12 @@ import {
  * 1. 持有并管理数据 (通过 ComponentContext)
  * 2. 修改数据
  * 3. 传递表达式对象给子组件
+ *
+ * Design: Swiss / International Typographic Style
+ * - Strict grid system
+ * - Minimalist, objective, clear
+ * - Sans-serif typography (Helvetica/Arial)
+ * - Limited color palette
  */
 @Component({
   selector: 'app-dynamic-expression-parent',
@@ -35,6 +41,7 @@ import {
     NzInputModule,
     NzButtonModule,
     NzInputNumberModule,
+    ContextExprPipe,
     DynamicFieldComponent,
     DynamicFieldInputComponent,
     ExpressionSelectComponent,
@@ -42,139 +49,140 @@ import {
   providers: [ComponentContext],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="warp-panel">
-      <div class="title-bar">
-        <div class="window-controls">
-          <span class="dot red"></span>
-          <span class="dot yellow"></span>
-          <span class="dot green"></span>
+    <div class="neubrutal-container">
+      <!-- Header -->
+      <header class="panel-header">
+        <div class="header-left">
+          <div class="logo-box">NB</div>
+          <h1 class="header-title">Dynamic Expression</h1>
         </div>
-        <span class="title">Dynamic Expression Test</span>
-      </div>
-
-      <div class="content">
-        <div class="block">
-          <div class="block-label">Parent Data (修改这里的数据)</div>
-          <div class="input-grid">
-            <div class="input-item">
-              <span class="var-name">name</span>
-              <input nz-input [(ngModel)]="inputName" class="warp-input" />
-              <button
-                nz-button
-                nzType="text"
-                class="warp-btn"
-                (click)="updateName()"
-              >
-                设置
-              </button>
-              <span class="var-current">当前: {{ ctx.getData('name') }}</span>
-            </div>
-            <div class="input-item">
-              <span class="var-name">age</span>
-              <nz-input-number
-                [(ngModel)]="inputAge"
-                [nzMin]="0"
-                class="warp-input-number"
-              ></nz-input-number>
-              <button
-                nz-button
-                nzType="text"
-                class="warp-btn"
-                (click)="updateAge()"
-              >
-                设置
-              </button>
-              <span class="var-current">当前: {{ ctx.getData('age') }}</span>
-            </div>
-            <div class="input-item">
-              <span class="var-name">status</span>
-              <input nz-input [(ngModel)]="inputStatus" class="warp-input" />
-              <button
-                nz-button
-                nzType="text"
-                class="warp-btn"
-                (click)="updateStatus()"
-              >
-                设置
-              </button>
-              <span class="var-current">当前: {{ ctx.getData('status') }}</span>
-            </div>
-            <div class="input-item bulk-item">
-              <span class="var-name">data</span>
-              <textarea
-                nz-input
-                [(ngModel)]="bulkDataJson"
-                class="warp-textarea"
-                rows="3"
-              ></textarea>
-              <button
-                nz-button
-                nzType="text"
-                class="warp-btn"
-                (click)="updateAllData()"
-              >
-                整包设置
-              </button>
-              <span class="var-current"
-                >当前: {{ ctx.getAllData() | json }}</span
-              >
-            </div>
-          </div>
-        </div>
-
-        <div class="block">
-          <div class="block-label">
-            🔵 DI 方式 (子组件通过 inject 获取 Context)
-          </div>
-          <div class="field-list">
-            <app-dynamic-field
-              [expressions]="diExpressions"
-            ></app-dynamic-field>
-          </div>
-        </div>
-
-        <div class="block">
-          <div class="block-label">🟠 Input 方式 (父组件显式传递数据)</div>
-          <div class="field-list">
-            <app-dynamic-field-input
-              [expressions]="inputExpressions"
-              [inputData]="ctx.data"
-            ></app-dynamic-field-input>
-          </div>
-        </div>
-
-        <div class="hint-block">
-          <span class="hint-icon">i</span>
-          <div class="hint-content">
-            <p>
-              <strong>DI 方式:</strong> 子组件只需传递 [expressions]，通过
-              inject(ComponentContext) 获取数据
-            </p>
-            <p>
-              <strong>Input 方式:</strong> 子组件需要同时传递 [expressions] 和
-              [inputData]
-            </p>
-          </div>
-          <button
-            nz-button
-            nzType="text"
-            class="warp-btn"
-            (click)="printCount()"
-          >
-            打印次数
+        <div class="header-actions">
+          <button class="btn-action primary" (click)="printCount()">
+            🖨 LOG STATS
           </button>
         </div>
+      </header>
 
-        <div class="block">
-          <div class="block-label">
-            🟣 表达式下拉列表 (动态计算 label 和 value)
-          </div>
-          <div class="field-list">
-            <app-expression-select
-              [options]="selectOptions"
-              labelExpression="\${a} - \${b}岁 (\${c ? '合格' : '不合格'})"
-              valueExpression="\${e}"
-            ></app-expression-select>
+      <div class="panel-body">
+        <!-- Left Column: Controls (Scrollable) -->
+        <div class="panel-col col-control">
+          <section class="card-box">
+            <h2 class="card-title">DATA SOURCE</h2>
+            <div class="card-content">
+              <div class="control-group">
+                <div class="control-row">
+                  <label>NAME</label>
+                  <div class="input-group">
+                    <input nz-input [(ngModel)]="inputName" />
+                    <button class="btn-mini" (click)="updateName()">SET</button>
+                  </div>
+                  <div class="value-tag">{{ ctx.getData('name') }}</div>
+                </div>
+
+                <div class="control-row">
+                  <label>AGE</label>
+                  <div class="input-group">
+                    <nz-input-number
+                      [(ngModel)]="inputAge"
+                      [nzMin]="0"
+                    ></nz-input-number>
+                    <button class="btn-mini" (click)="updateAge()">SET</button>
+                  </div>
+                  <div class="value-tag">{{ ctx.getData('age') }}</div>
+                </div>
+
+                <div class="control-row">
+                  <label>STATUS</label>
+                  <div class="input-group">
+                    <input nz-input [(ngModel)]="inputStatus" />
+                    <button class="btn-mini" (click)="updateStatus()">
+                      SET
+                    </button>
+                  </div>
+                  <div class="value-tag">{{ ctx.getData('status') }}</div>
+                </div>
+
+                <div class="control-row">
+                  <label>BULK DATA (JSON)</label>
+                  <textarea
+                    nz-input
+                    [(ngModel)]="bulkDataJson"
+                    rows="4"
+                  ></textarea>
+                  <button
+                    class="btn-action full-width"
+                    (click)="updateAllData()"
+                  >
+                    UPDATE ALL
+                  </button>
+                  <div class="code-box">
+                    {{ ctx.getAllData() | json }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Column: Visualization (Scrollable) -->
+        <div class="panel-col col-visual">
+          <section class="card-box">
+            <h2 class="card-title">01 / DI INJECTION</h2>
+            <div class="card-content">
+              <app-dynamic-field
+                [expressions]="diExpressions"
+              ></app-dynamic-field>
+            </div>
+          </section>
+
+          <section class="card-box">
+            <h2 class="card-title">02 / INPUT BINDING</h2>
+            <div class="card-content">
+              <app-dynamic-field-input
+                [expressions]="inputExpressions"
+                [inputData]="ctx.data"
+              ></app-dynamic-field-input>
+            </div>
+          </section>
+
+          <section class="card-box">
+            <h2 class="card-title">03 / EXPRESSION SELECT</h2>
+            <div class="card-content">
+              <app-expression-select
+                [options]="selectOptions"
+                [labelExpression]="labelExpression"
+                [valueExpression]="valueExpression"
+              ></app-expression-select>
+            </div>
+          </section>
+
+          <section class="card-box">
+            <h2 class="card-title">04 / TEMPLATE PIPE</h2>
+            <div class="card-content">
+              <div class="pipe-list">
+                <div class="pipe-item">
+                  <code>&#36;&#123;name&#125;</code>
+                  <span class="arrow">➔</span>
+                  <span class="result">{{ exampleName | ctxExpr }}</span>
+                </div>
+                <div class="pipe-item">
+                  <code>&#36;&#123;age&#125;</code>
+                  <span class="arrow">➔</span>
+                  <span class="result">{{ exampleAge | ctxExpr }}</span>
+                </div>
+                <div class="pipe-item">
+                  <code>&#36;&#123;name&#125; | upper</code>
+                  <span class="arrow">➔</span>
+                  <span class="result">
+                    {{ exampleUpper | ctxExpr }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="footer-note">
+            <p>NB-UI v1.0 // NO COMPROMISE</p>
           </div>
         </div>
       </div>
@@ -182,199 +190,274 @@ import {
   `,
   styles: [
     `
+      /* Neubrutalism Style */
+      @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@700;900&family=Space+Mono:wght@400;700&display=swap');
+
       :host {
+        --nb-bg: #fffbf0; /* Cream */
+        --nb-primary: #8b5cf6; /* Violet */
+        --nb-secondary: #f472b6; /* Pink */
+        --nb-accent: #34d399; /* Green */
+        --nb-border: #000;
+        --nb-shadow: 4px 4px 0 #000;
+        --nb-radius: 0;
+
         display: block;
-      }
-
-      .warp-panel {
-        max-width: 700px;
-        margin: 0 auto;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05),
-          0 4px 16px rgba(0, 0, 0, 0.08);
+        height: 100vh;
         overflow: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-          sans-serif;
+        background-color: var(--nb-bg);
+        color: #000;
+        font-family: 'Public Sans', sans-serif;
       }
 
-      .title-bar {
-        height: 44px;
-        background: linear-gradient(to bottom, #f8f8f8, #f0f0f0);
-        border-bottom: 1px solid #e0e0e0;
+      .neubrutal-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      /* Header */
+      .panel-header {
+        height: 80px;
+        flex-shrink: 0;
+        background: #fff;
+        border-bottom: 3px solid var(--nb-border);
         display: flex;
         align-items: center;
-        padding: 0 16px;
-        gap: 12px;
+        justify-content: space-between;
+        padding: 0 24px;
+        z-index: 10;
       }
 
-      .window-controls {
-        display: flex;
-        gap: 8px;
-      }
-
-      .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-      }
-      .dot.red {
-        background: #ff5f57;
-      }
-      .dot.yellow {
-        background: #febc2e;
-      }
-      .dot.green {
-        background: #28c840;
-      }
-
-      .title {
-        flex: 1;
-        text-align: center;
-        font-size: 13px;
-        color: #333;
-        font-weight: 600;
-      }
-
-      .content {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .block {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .block-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #8e8e93;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .input-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .input-item {
+      .header-left {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        background: #f9f9f9;
-        border-radius: 8px;
-        border: 1px solid #ebebeb;
+        gap: 16px;
       }
 
-      .var-name {
-        font-family: 'SF Mono', monospace;
-        font-size: 13px;
-        font-weight: 600;
-        color: #007aff;
-        min-width: 60px;
-      }
-
-      .var-current {
-        margin-left: auto;
-        font-family: 'SF Mono', monospace;
-        font-size: 12px;
-        color: #8e8e93;
-        background: #f0f0f0;
-        padding: 2px 8px;
-        border-radius: 4px;
-      }
-
-      .warp-input {
-        width: 140px !important;
-        border-radius: 6px !important;
-        border-color: #d1d1d6 !important;
-      }
-
-      .warp-input-number {
-        width: 140px !important;
-      }
-
-      ::ng-deep .warp-input-number .ant-input-number {
-        border-radius: 6px !important;
-        border-color: #d1d1d6 !important;
-      }
-
-      .warp-btn {
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: #007aff !important;
-        padding: 4px 12px !important;
-        height: auto !important;
-        border-radius: 6px !important;
-      }
-
-      .warp-btn:hover {
-        background: rgba(0, 122, 255, 0.08) !important;
-      }
-
-      .field-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .bulk-item {
-        align-items: flex-start;
-      }
-
-      .warp-textarea {
-        width: 320px !important;
-        border-radius: 6px !important;
-        border-color: #d1d1d6 !important;
-        font-family: 'SF Mono', monospace;
-        font-size: 11px;
-        line-height: 16px;
-      }
-
-      .hint-block {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 12px 14px;
-        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-        border-radius: 8px;
-        border: 1px solid #bae6fd;
-        font-size: 12px;
-        color: #0369a1;
-      }
-
-      .hint-icon {
-        width: 18px;
-        height: 18px;
-        background: #0ea5e9;
+      .logo-box {
+        width: 48px;
+        height: 48px;
+        background: #000;
         color: #fff;
-        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
-        font-weight: 600;
-        flex-shrink: 0;
-        margin-top: 2px;
+        font-weight: 900;
+        font-size: 20px;
+        border: 2px solid #000;
+        transform: rotate(-3deg);
       }
 
-      .hint-content {
+      .header-title {
+        font-size: 24px;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin: 0;
+        letter-spacing: -1px;
+      }
+
+      /* Body Layout */
+      .panel-body {
         flex: 1;
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        overflow: hidden;
       }
 
-      .hint-content p {
-        margin: 0 0 4px 0;
+      .panel-col {
+        padding: 24px;
+        overflow-y: auto;
       }
 
-      .hint-content p:last-child {
-        margin-bottom: 0;
+      .col-control {
+        background: #f1f5f9;
+        border-right: 3px solid var(--nb-border);
+      }
+
+      .col-visual {
+        background: var(--nb-bg);
+      }
+
+      /* Cards */
+      .card-box {
+        background: #fff;
+        border: 3px solid var(--nb-border);
+        box-shadow: var(--nb-shadow);
+        margin-bottom: 32px;
+        transition: transform 0.1s;
+      }
+
+      .card-box:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 #000;
+      }
+
+      .card-title {
+        background: #000;
+        color: #fff;
+        padding: 12px 16px;
+        font-family: 'Space Mono', monospace;
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0;
+        border-bottom: 3px solid var(--nb-border);
+      }
+
+      .card-content {
+        padding: 20px;
+      }
+
+      /* Controls */
+      .control-row {
+        margin-bottom: 20px;
+      }
+
+      .control-row label {
+        display: block;
+        font-weight: 900;
+        font-size: 12px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 0;
+        margin-bottom: 8px;
+      }
+
+      input[nz-input],
+      textarea[nz-input],
+      nz-input-number {
+        border: 2px solid var(--nb-border) !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        font-family: 'Space Mono', monospace;
+        font-size: 14px;
+        background: #fff;
+      }
+
+      input[nz-input]:focus,
+      textarea[nz-input]:focus {
+        background: #fff0f5;
+      }
+
+      .btn-mini {
+        background: var(--nb-accent);
+        border: 2px solid var(--nb-border);
+        border-left: none;
+        font-weight: 900;
+        padding: 0 16px;
+        cursor: pointer;
+        transition: all 0.1s;
+      }
+
+      .btn-mini:hover {
+        background: #10b981;
+      }
+
+      .btn-mini:active {
+        background: #000;
+        color: #fff;
+      }
+
+      .btn-action {
+        background: #fff;
+        border: 2px solid var(--nb-border);
+        box-shadow: 2px 2px 0 #000;
+        padding: 10px 24px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: all 0.1s;
+        text-transform: uppercase;
+      }
+
+      .btn-action.primary {
+        background: var(--nb-primary);
+        color: #fff;
+      }
+
+      .btn-action:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 3px 3px 0 #000;
+      }
+
+      .btn-action:active {
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 #000;
+      }
+
+      .btn-action.full-width {
+        width: 100%;
+        margin: 12px 0;
+        background: var(--nb-secondary);
+      }
+
+      .value-tag {
+        display: inline-block;
+        background: #e2e8f0;
+        border: 2px solid #000;
+        padding: 4px 8px;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .code-box {
+        background: #000;
+        color: #0f0;
+        padding: 12px;
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        border: 2px solid #000;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      /* Pipes */
+      .pipe-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .pipe-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px;
+        background: #f8fafc;
+        border: 2px solid #000;
+      }
+
+      .pipe-item code {
+        font-family: 'Space Mono', monospace;
+        background: #e2e8f0;
+        padding: 4px 8px;
+        font-weight: 700;
+      }
+
+      .arrow {
+        font-weight: 900;
+      }
+
+      .result {
+        font-weight: 900;
+        color: var(--nb-primary);
+        font-size: 16px;
+        background: #ede9fe;
+        padding: 2px 6px;
+        border: 1px solid var(--nb-primary);
+      }
+
+      .footer-note {
+        margin-top: 40px;
+        text-align: center;
+        font-family: 'Space Mono', monospace;
+        color: #666;
+        font-size: 12px;
+        opacity: 0.5;
       }
     `,
   ],
@@ -409,6 +492,13 @@ export class DynamicExpressionParentComponent extends ContextHost {
     isAdult: "${age >= 18 ? '成年' : '未成年'}",
     status: "${status === 'active' ? '✅ 活跃' : '❌ 非活跃'}",
   };
+
+  // 表达式模板变量 (绑定到模板以避免转义问题)
+  labelExpression = "${a} - ${b}岁 (${c ? '合格' : '不合格'})";
+  valueExpression = '${e}';
+  exampleName = '${name}';
+  exampleAge = '${age}';
+  exampleUpper = '${name} | upper';
 
   /**
    * 下拉列表选项 (Signal)

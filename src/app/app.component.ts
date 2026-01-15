@@ -15,9 +15,9 @@ import { DynamicExpressionParentComponent } from './testing/dynamic-expression/p
       .page {
         min-height: 100vh;
         padding: 60px 20px;
-        background: #f5f5f7;
+        background: #000000ff;
       }
     `,
   ],
 })
-export class AppComponent { }
+export class AppComponent {}

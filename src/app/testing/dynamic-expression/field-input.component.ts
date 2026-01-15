@@ -28,12 +28,12 @@ export type ExpressionMapInput = Record<string, string>;
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="field-container">
-      <nz-tag nzColor="orange" class="mode-tag">Input</nz-tag>
+      <div class="mode-badge">INPUT MODE</div>
       <div class="expression-list">
         <div *ngFor="let item of resultEntries()" class="expression-row">
           <span class="label">{{ item.key }}</span>
           <code class="expression" [textContent]="item.expression"></code>
-          <span class="arrow">→</span>
+          <span class="arrow">➜</span>
           <span class="result">{{ item.signal() }}</span>
         </div>
       </div>
@@ -41,65 +41,91 @@ export type ExpressionMapInput = Record<string, string>;
   `,
   styles: [
     `
-      .field-container {
-        padding: 16px;
-        background: linear-gradient(135deg, #fffbeb, #fef3c7);
-        border-radius: 8px;
-        border: 1px solid #fcd34d;
-        position: relative;
+      /* Neubrutalism - Input Component */
+      @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@700;900&family=Space+Mono:wght@400;700&display=swap');
+
+      :host {
+        --nb-border: #000;
+        --nb-shadow: 4px 4px 0 #000;
+        --nb-green: #34d399;
       }
 
-      .mode-tag {
+      .field-container {
+        font-family: 'Public Sans', sans-serif;
+        padding: 0;
+        background: #fff;
+        border: 3px solid var(--nb-border);
+        box-shadow: var(--nb-shadow);
+        position: relative;
+        margin-bottom: 24px;
+      }
+
+      .mode-badge {
         position: absolute;
-        top: -10px;
-        right: 10px;
-        font-size: 10px !important;
-        line-height: 16px !important;
-        height: 18px !important;
-        padding: 0 6px !important;
+        top: -16px;
+        right: 16px;
+        background: var(--nb-green);
+        border: 3px solid var(--nb-border);
+        color: #000;
+        font-weight: 900;
+        padding: 4px 12px;
+        transform: rotate(-2deg);
+        z-index: 5;
+        box-shadow: 2px 2px 0 #000;
       }
 
       .expression-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
       }
 
       .expression-row {
         display: flex;
         align-items: center;
         gap: 12px;
+        padding: 16px;
+        border-bottom: 3px solid var(--nb-border);
+        transition: background-color 0.1s;
+      }
+
+      .expression-row:last-child {
+        border-bottom: none;
+      }
+
+      .expression-row:hover {
+        background: #d1fae5;
       }
 
       .label {
+        font-weight: 900;
+        text-transform: uppercase;
+        background: #000;
+        color: #fff;
+        padding: 2px 8px;
         font-size: 12px;
-        font-weight: 600;
-        color: #92400e;
-        min-width: 80px;
       }
 
       .expression {
-        font-family: 'SF Mono', monospace;
-        font-size: 11px;
-        color: #d97706;
-        background: #fef3c7;
-        padding: 3px 8px;
-        border-radius: 4px;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        background: #f1f5f9;
+        padding: 4px 8px;
+        border: 2px solid #e2e8f0;
         flex: 1;
-        word-break: break-all;
       }
 
       .arrow {
-        color: #f59e0b;
-        font-size: 14px;
+        font-weight: 900;
+        font-size: 16px;
       }
 
       .result {
-        font-family: 'SF Mono', monospace;
-        font-size: 13px;
-        font-weight: 600;
-        color: #92400e;
-        min-width: 80px;
+        font-family: 'Space Mono', monospace;
+        font-weight: 700;
+        background: var(--nb-green);
+        border: 2px solid #000;
+        padding: 4px 12px;
+        box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
       }
     `,
   ],
