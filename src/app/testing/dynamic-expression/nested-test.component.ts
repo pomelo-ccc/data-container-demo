@@ -87,7 +87,7 @@ function trackExpressionExecution(expression: string): void {
             <nz-tag [nzColor]="'blue'">{{ ctx.id() }}</nz-tag>
           </div>
           <button nz-button nzType="link" nzSize="small" (click)="printExpressionCounts()">
-            <span nz-icon nzType="bug"></span> Debug Counts
+            <span nz-icon nzType="info-circle"></span> Debug Counts
           </button>
         </div>
       </div>

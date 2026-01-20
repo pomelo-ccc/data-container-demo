@@ -58,7 +58,7 @@ import { ComponentContext, ContextHost } from '../../context';
                 <input nz-input [(ngModel)]="ctxRole" (ngModelChange)="updateContext()" />
               </div>
               <div class="form-group highlight-group">
-                <label>$label (Global)</label>
+                <label>label (Global)</label>
                 <input nz-input [(ngModel)]="ctxLabel" (ngModelChange)="updateContext()" placeholder="Context Label" />
               </div>
             </div>
@@ -84,7 +84,7 @@ import { ComponentContext, ContextHost } from '../../context';
                 <input nz-input [(ngModel)]="scopeAStatus" (ngModelChange)="updateScopeA()" />
               </div>
               <div class="form-group highlight-group">
-                <label>$label (Override)</label>
+                <label>label (Override)</label>
                 <input nz-input [(ngModel)]="scopeALabel" (ngModelChange)="updateScopeA()" placeholder="Leave empty to use Context" />
                 <div class="hint" *ngIf="!scopeALabel">Using Context Value</div>
               </div>
@@ -261,8 +261,8 @@ export class ExtraScopeTestComponent extends ContextHost implements OnInit {
     status: 'Active'
   });
 
-  target1 = '{ user: { name, role }, $label }';
-  target2 = '{ user: { name }, status, $label? }';
+  target1 = '{ user: { name, role }, label }';
+  target2 = '{ user: { name }, status, label? }';
   expr1Preview = '${user.name}';
   expr2Preview = '${user.role}';
   expr3Preview = '${user.name} is ${user.role} (${status})';
@@ -294,7 +294,9 @@ export class ExtraScopeTestComponent extends ContextHost implements OnInit {
       extraScopes: [this.extraScopeA]
     });
 
-    this.sigExpr4 = this.ctx.createExpressionSignal<string>('${label}');
+    this.sigExpr4 = this.ctx.createExpressionSignal<string>('${label}', {
+      extraScopes: [this.extraScopeA]
+    });
   }
 
   updateContext() {
@@ -302,7 +304,7 @@ export class ExtraScopeTestComponent extends ContextHost implements OnInit {
       name: this.ctxName,
       role: this.ctxRole
     });
-
+    this.ctx.setData('label', this.ctxLabel);
   }
 
   updateScopeA() {
@@ -313,7 +315,7 @@ export class ExtraScopeTestComponent extends ContextHost implements OnInit {
 
     // 只有当 localLabel 有值时才设置到 extraScope 中
     if (this.scopeALabel && this.scopeALabel.trim() !== '') {
-      newData['$label'] = this.scopeALabel;
+      newData['label'] = this.scopeALabel;
     }
     // 如果没有值，不设置该 key，这样 Object.assign 合并时就不会覆盖 Context 中的值
     // （或者 Context 的值就会透传过来，前提是 scopeData 包含了 Context）
