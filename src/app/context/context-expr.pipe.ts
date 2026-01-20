@@ -5,7 +5,7 @@ import { ComponentContext } from './component-context.service';
 @Pipe({
   name: 'ctxExpr',
   standalone: true,
-  pure: false,
+  pure: true,
 })
 export class ContextExprPipe implements PipeTransform {
   private readonly ctx = inject(ComponentContext);

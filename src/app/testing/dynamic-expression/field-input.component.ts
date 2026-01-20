@@ -8,7 +8,6 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NzTagModule } from 'ng-zorro-antd/tag';
 import { evaluateExpression } from '../../context/component-context.service';
 
 /**
@@ -17,140 +16,116 @@ import { evaluateExpression } from '../../context/component-context.service';
 export type ExpressionMapInput = Record<string, string>;
 
 /**
- * Input 方式子组件
- *
- * 接收一个表达式对象和数据 Signal
+ * Input 方式子组件 - 简洁表格风格
  */
 @Component({
   selector: 'app-dynamic-field-input',
   standalone: true,
-  imports: [CommonModule, NzTagModule],
+  imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="field-container">
-      <div class="mode-badge">INPUT MODE</div>
-      <div class="expression-list">
-        <div *ngFor="let item of resultEntries()" class="expression-row">
-          <span class="label">{{ item.key }}</span>
-          <code class="expression" [textContent]="item.expression"></code>
-          <span class="arrow">➜</span>
-          <span class="result">{{ item.signal() }}</span>
-        </div>
-      </div>
-    </div>
+    <table class="expr-table">
+      <thead>
+        <tr>
+          <th class="col-key">字段</th>
+          <th class="col-expr">表达式</th>
+          <th class="col-result">结果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of resultEntries()">
+          <td class="col-key">
+            <span class="key">{{ item.key }}</span>
+          </td>
+          <td class="col-expr">
+            <code [textContent]="item.expression"></code>
+          </td>
+          <td class="col-result">
+            <span class="value">{{ item.signal() }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   `,
   styles: [
     `
-      /* Neubrutalism - Input Component */
-      @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@700;900&family=Space+Mono:wght@400;700&display=swap');
-
       :host {
-        --nb-border: #000;
-        --nb-shadow: 4px 4px 0 #000;
-        --nb-green: #34d399;
+        display: block;
       }
 
-      .field-container {
-        font-family: 'Public Sans', sans-serif;
-        padding: 0;
-        background: #fff;
-        border: 3px solid var(--nb-border);
-        box-shadow: var(--nb-shadow);
-        position: relative;
-        margin-bottom: 24px;
+      .expr-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
       }
 
-      .mode-badge {
-        position: absolute;
-        top: -16px;
-        right: 16px;
-        background: var(--nb-green);
-        border: 3px solid var(--nb-border);
-        color: #000;
-        font-weight: 900;
-        padding: 4px 12px;
-        transform: rotate(-2deg);
-        z-index: 5;
-        box-shadow: 2px 2px 0 #000;
+      .expr-table th,
+      .expr-table td {
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
       }
 
-      .expression-list {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .expression-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px;
-        border-bottom: 3px solid var(--nb-border);
-        transition: background-color 0.1s;
-      }
-
-      .expression-row:last-child {
-        border-bottom: none;
-      }
-
-      .expression-row:hover {
-        background: #d1fae5;
-      }
-
-      .label {
-        font-weight: 900;
-        text-transform: uppercase;
-        background: #000;
-        color: #fff;
-        padding: 2px 8px;
+      .expr-table th {
+        font-weight: 500;
+        color: #666;
+        background: #fafafa;
         font-size: 12px;
       }
 
-      .expression {
-        font-family: 'Space Mono', monospace;
+      .col-key {
+        width: 100px;
+      }
+
+      .col-expr {
+        width: auto;
+      }
+
+      .col-result {
+        width: 120px;
+      }
+
+      .key {
+        font-family: 'SF Mono', Consolas, monospace;
         font-size: 12px;
-        background: #f1f5f9;
-        padding: 4px 8px;
-        border: 2px solid #e2e8f0;
-        flex: 1;
+        font-weight: 500;
+        color: #333;
       }
 
-      .arrow {
-        font-weight: 900;
-        font-size: 16px;
+      code {
+        font-family: 'SF Mono', Consolas, monospace;
+        font-size: 11px;
+        background: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        color: #666;
+        display: inline-block;
+        max-width: 280px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
-      .result {
-        font-family: 'Space Mono', monospace;
-        font-weight: 700;
-        background: var(--nb-green);
-        border: 2px solid #000;
-        padding: 4px 12px;
-        box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+      .value {
+        font-family: 'SF Mono', Consolas, monospace;
+        font-weight: 500;
+        color: #52c41a;
+      }
+
+      tr:hover {
+        background: #fafafa;
       }
     `,
   ],
 })
 export class DynamicFieldInputComponent implements OnInit {
-  /**
-   * 表达式对象
-   */
   @Input({ required: true }) expressions!: ExpressionMapInput;
-
-  /**
-   * 数据 Signal (通过 @Input 显式传递)
-   */
   @Input({ required: true }) inputData!: Signal<Record<string, any>>;
 
-  /**
-   * 存储每个表达式的 Signal 结果
-   */
   readonly resultEntries = signal<
     Array<{ key: string; expression: string; signal: Signal<any> }>
   >([]);
 
-  /**
-   * 在 ngOnInit 中初始化，此时 @Input 已绑定
-   */
   ngOnInit(): void {
     const entries = Object.entries(this.expressions).map(
       ([key, expression]) => ({

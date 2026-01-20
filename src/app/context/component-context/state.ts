@@ -26,13 +26,29 @@ export abstract class ComponentContextState {
     this.parent = parent ?? null;
 
     this.destroyRef.onDestroy(() => {
+      const ctxId = this.id();
+      const ctxType = this.type();
+      const fieldSelectorCount = this._fieldSelectors.size;
+      const expressionDepCount = this._expressionDeps.size;
+      const storeSize = this._store().size;
+
+      console.log(
+        `%c[Context 销毁] ${ctxId} (${ctxType})`,
+        'color: #ff4d4f; font-weight: bold'
+      );
+      console.log(`  - 清理 fieldSelectors: ${fieldSelectorCount} 个`);
+      console.log(`  - 清理 expressionDeps: ${expressionDepCount} 个`);
+      console.log(`  - 清理 store 数据: ${storeSize} 条`);
+
       if (this._registered) {
-        this.registry.unregister(this.id());
+        this.registry.unregister(ctxId);
         this._registered = false;
       }
       this._store().clear();
       this._expressionDeps.clear();
       this._fieldSelectors.clear();
+
+      console.log(`  ✓ 清理完成`);
     });
   }
 
@@ -50,4 +66,3 @@ export abstract class ComponentContextState {
   readonly meta = computed(() => this._meta());
   readonly registered = computed(() => this._registered);
 }
-
