@@ -7,6 +7,7 @@ import {
 } from '../utils/expression-utils';
 import type { ExpressionDependency } from '../types/context-types';
 import { ComponentContextStore } from './store';
+import { deepMergeScope } from './scope-utils';
 
 export type ExpressionPipeFn = (value: any, ...args: any[]) => any;
 
@@ -563,7 +564,7 @@ export abstract class ComponentContextExpression extends ComponentContextStore {
         options.extraScopes.forEach((scopeSignal) => {
           const extraData = scopeSignal();
           if (extraData && typeof extraData === 'object') {
-            Object.assign(finalScopeData, extraData);
+            deepMergeScope(finalScopeData, extraData);
           }
         });
       }
