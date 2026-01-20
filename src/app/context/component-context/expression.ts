@@ -19,6 +19,11 @@ export interface CreateExpressionSignalOptions {
   sources?: Record<string, Signal<any>>;
   pipes?: ExpressionPipeCall[];
   pipeRegistry?: Record<string, ExpressionPipeFn>;
+  /**
+   * 额外的数据作用域数组（Signal），其属性优先级高于 Context 中的数据
+   * 数组后面的元素优先级高于前面的元素
+   */
+  extraScopes?: Signal<Record<string, any>>[];
 }
 
 const defaultPipeRegistry: Record<string, ExpressionPipeFn> = {
@@ -438,6 +443,32 @@ export abstract class ComponentContextExpression extends ComponentContextStore {
     return value as T;
   }
 
+  /**
+   * 获取缓存的表达式信号。
+   * 
+   * 此方法会缓存创建的信号，适用于动态列表等场景：
+   * - 模板插值：`{{ ctx.expr('${user.name}')() }}`
+   * - 属性绑定：`[disabled]="ctx.expr('${isDisabled}')()"`
+   * - *ngFor 循环：`{{ ctx.expr(item.labelExpr)() }}`
+   * 
+   * @param expression 表达式字符串
+   * @returns 缓存的信号
+   */
+  private readonly _signalCache = new Map<string, Signal<any>>();
+
+  expr<T = any>(expression: string): Signal<T> {
+    if (!expression || typeof expression !== 'string') {
+      return computed(() => expression as T);
+    }
+
+    let sig = this._signalCache.get(expression);
+    if (!sig) {
+      sig = this.createExpressionSignal<T>(expression);
+      this._signalCache.set(expression, sig);
+    }
+    return sig as Signal<T>;
+  }
+
   createExpressionSignal<T = any>(
     expression: string,
     options?: CreateExpressionSignalOptions
@@ -490,17 +521,57 @@ export abstract class ComponentContextExpression extends ComponentContextStore {
     const rootKeys = [
       ...new Set(variables.map(getRootKey).filter((k) => !sourceKeys.has(k))),
     ];
-    const selectors = rootKeys.map((key) =>
-      this._getOrCreateFieldSelector(key)
-    );
+
+    // 记录新创建的 fieldSelector
+    const newSelectors: string[] = [];
+    const selectors = rootKeys.map((key) => {
+      const existingSelector = this._fieldSelectors.get(key);
+      if (!existingSelector) {
+        newSelectors.push(key);
+      }
+      return this._getOrCreateFieldSelector(key);
+    });
+
+    if (newSelectors.length > 0) {
+      console.log(
+        `%c[Signal 创建] ${this.id()}`,
+        'color: #52c41a; font-weight: bold',
+        `\n  表达式: ${expression}\n  新建 fieldSelector: [${newSelectors.join(
+          ', '
+        )}]\n  当前 fieldSelectors 总数: ${this._fieldSelectors.size}`
+      );
+    }
 
     return computed(() => {
       selectors.forEach((selector) => selector());
-      const scopeData = this._buildScopeForExpression(variables, sourceSignals);
-      let value = evaluateExpression(baseExpression, scopeData);
+      const baseScopeData = this._buildScopeForExpression(
+        variables,
+        sourceSignals
+      );
+
+      let finalScopeData = baseScopeData;
+
+      // 合并 extraScopes 数据，优先级高于 scopeData
+      // 数组顺序：后面的覆盖前面的
+      // 注意：这里创建新对象 finalScopeData 以避免修改 baseScopeData (Proxy)，
+      // 从而避免在 computed 中触发 Signal 写入 (NG0600 错误)
+      if (options?.extraScopes?.length) {
+        // 先浅拷贝 baseScopeData，这会得到一个普通对象，失去 Proxy 的自动写回功能，
+        // 这在 extraScope 场景下是预期的行为（临时覆盖不应影响 Context）
+        finalScopeData = { ...baseScopeData };
+
+        options.extraScopes.forEach((scopeSignal) => {
+          const extraData = scopeSignal();
+          if (extraData && typeof extraData === 'object') {
+            Object.assign(finalScopeData, extraData);
+          }
+        });
+      }
+
+      let value = evaluateExpression(baseExpression, finalScopeData);
       value = this._applyExpressionPipes(
         value,
-        scopeData,
+        finalScopeData,
         pipeCallsFromExpression,
         optionPipes,
         options?.pipeRegistry
@@ -617,9 +688,9 @@ export abstract class ComponentContextExpression extends ComponentContextStore {
         if (!parsed.name) continue;
         const args = parsed.argsExpression
           ? (evaluateExpression(
-              '${[' + parsed.argsExpression + ']}',
-              scope
-            ) as any[])
+            '${[' + parsed.argsExpression + ']}',
+            scope
+          ) as any[])
           : [];
         applyCall(parsed.name, args);
         continue;
@@ -632,8 +703,8 @@ export abstract class ComponentContextExpression extends ComponentContextStore {
         typeof p.args === 'string'
           ? (evaluateExpression('${[' + p.args + ']}', scope) as any[])
           : Array.isArray(p.args)
-          ? p.args
-          : [];
+            ? p.args
+            : [];
 
       applyCall(name, args);
     }

@@ -4,33 +4,23 @@ import { FormsModule } from '@angular/forms';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
-import { ComponentContext, ContextExprPipe, ContextHost } from '../../context';
-import { DynamicFieldComponent, ExpressionMap } from './field.component';
-import { DynamicFieldInputComponent } from './field-input.component';
-import {
-  ExpressionSelectComponent,
-  SelectOption,
-} from './expression-select.component';
+import { ComponentContext, ContextHost } from '../../context';
+import { NestedChildComponent, ListItemConfig } from './nested-test.component';
+import { ExtraScopeTestComponent } from './extra-scope-test.component';
 
-// 全局计数器 - 用于统计表达式执行次数
-(window as any).__exprCount = {
-  name: 0,
-  age: 0,
-  ageCheck: 0,
-  status: 0,
-};
+interface UserData {
+  name: string;
+  age: number;
+  dog: {
+    name: string;
+    age: number;
+    breed: string;
+    color: string;
+  };
+}
 
 /**
- * 父组件职责:
- * 1. 持有并管理数据 (通过 ComponentContext)
- * 2. 修改数据
- * 3. 传递表达式对象给子组件
- *
- * Design: Swiss / International Typographic Style
- * - Strict grid system
- * - Minimalist, objective, clear
- * - Sans-serif typography (Helvetica/Arial)
- * - Limited color palette
+ * 父组件 - 嵌套属性测试
  */
 @Component({
   selector: 'app-dynamic-expression-parent',
@@ -41,526 +31,494 @@ import {
     NzInputModule,
     NzButtonModule,
     NzInputNumberModule,
-    ContextExprPipe,
-    DynamicFieldComponent,
-    DynamicFieldInputComponent,
-    ExpressionSelectComponent,
+    NestedChildComponent,
+    ExtraScopeTestComponent,
   ],
   providers: [ComponentContext],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="neubrutal-container">
-      <!-- Header -->
-      <header class="panel-header">
-        <div class="header-left">
-          <div class="logo-box">NB</div>
-          <h1 class="header-title">Dynamic Expression</h1>
-        </div>
-        <div class="header-actions">
-          <button class="btn-action primary" (click)="printCount()">
-            🖨 LOG STATS
-          </button>
-        </div>
-      </header>
+    <div class="page">
+      <!-- 左侧：父组件数据控制 -->
+      <aside class="sidebar">
+        <div class="section">
+          <h3 class="section-title">父组件数据</h3>
 
-      <div class="panel-body">
-        <!-- Left Column: Controls (Scrollable) -->
-        <div class="panel-col col-control">
-          <section class="card-box">
-            <h2 class="card-title">DATA SOURCE</h2>
-            <div class="card-content">
-              <div class="control-group">
-                <div class="control-row">
-                  <label>NAME</label>
-                  <div class="input-group">
-                    <input nz-input [(ngModel)]="inputName" />
-                    <button class="btn-mini" (click)="updateName()">SET</button>
-                  </div>
-                  <div class="value-tag">{{ ctx.getData('name') }}</div>
-                </div>
-
-                <div class="control-row">
-                  <label>AGE</label>
-                  <div class="input-group">
-                    <nz-input-number
-                      [(ngModel)]="inputAge"
-                      [nzMin]="0"
-                    ></nz-input-number>
-                    <button class="btn-mini" (click)="updateAge()">SET</button>
-                  </div>
-                  <div class="value-tag">{{ ctx.getData('age') }}</div>
-                </div>
-
-                <div class="control-row">
-                  <label>STATUS</label>
-                  <div class="input-group">
-                    <input nz-input [(ngModel)]="inputStatus" />
-                    <button class="btn-mini" (click)="updateStatus()">
-                      SET
-                    </button>
-                  </div>
-                  <div class="value-tag">{{ ctx.getData('status') }}</div>
-                </div>
-
-                <div class="control-row">
-                  <label>BULK DATA (JSON)</label>
-                  <textarea
-                    nz-input
-                    [(ngModel)]="bulkDataJson"
-                    rows="4"
-                  ></textarea>
-                  <button
-                    class="btn-action full-width"
-                    (click)="updateAllData()"
-                  >
-                    UPDATE ALL
-                  </button>
-                  <div class="code-box">
-                    {{ ctx.getAllData() | json }}
-                  </div>
-                </div>
-              </div>
+          <div class="data-group">
+            <div class="group-label">user.name</div>
+            <div class="field-row">
+              <input nz-input [(ngModel)]="inputUserName" />
+              <button nz-button nzType="primary" (click)="updateUserName()">
+                设置
+              </button>
             </div>
-          </section>
-        </div>
+            <span class="current">{{ getUserData()?.name }}</span>
+          </div>
 
-        <!-- Right Column: Visualization (Scrollable) -->
-        <div class="panel-col col-visual">
-          <section class="card-box">
-            <h2 class="card-title">01 / DI INJECTION</h2>
-            <div class="card-content">
-              <app-dynamic-field
-                [expressions]="diExpressions"
-              ></app-dynamic-field>
+          <div class="data-group">
+            <div class="group-label">user.dog.name</div>
+            <div class="field-row">
+              <input nz-input [(ngModel)]="inputDogName" />
+              <button nz-button nzType="primary" (click)="updateDogName()">
+                设置
+              </button>
             </div>
-          </section>
+            <span class="current">{{ getUserData()?.dog?.name }}</span>
+          </div>
 
-          <section class="card-box">
-            <h2 class="card-title">02 / INPUT BINDING</h2>
-            <div class="card-content">
-              <app-dynamic-field-input
-                [expressions]="inputExpressions"
-                [inputData]="ctx.data"
-              ></app-dynamic-field-input>
+          <div class="data-group">
+            <div class="group-label">user.dog.age</div>
+            <div class="field-row">
+              <nz-input-number
+                [(ngModel)]="inputDogAge"
+                [nzMin]="0"
+                [nzMax]="30"
+              ></nz-input-number>
+              <button nz-button nzType="primary" (click)="updateDogAge()">
+                设置
+              </button>
             </div>
-          </section>
+            <span class="current">{{ getUserData()?.dog?.age }}</span>
+          </div>
 
-          <section class="card-box">
-            <h2 class="card-title">03 / EXPRESSION SELECT</h2>
-            <div class="card-content">
-              <app-expression-select
-                [options]="selectOptions"
-                [labelExpression]="labelExpression"
-                [valueExpression]="valueExpression"
-              ></app-expression-select>
+          <div class="data-group">
+            <div class="group-label">user.dog.breed</div>
+            <div class="field-row">
+              <input nz-input [(ngModel)]="inputDogBreed" />
+              <button nz-button nzType="primary" (click)="updateDogBreed()">
+                设置
+              </button>
             </div>
-          </section>
-
-          <section class="card-box">
-            <h2 class="card-title">04 / TEMPLATE PIPE</h2>
-            <div class="card-content">
-              <div class="pipe-list">
-                <div class="pipe-item">
-                  <code>&#36;&#123;name&#125;</code>
-                  <span class="arrow">➔</span>
-                  <span class="result">{{ exampleName | ctxExpr }}</span>
-                </div>
-                <div class="pipe-item">
-                  <code>&#36;&#123;age&#125;</code>
-                  <span class="arrow">➔</span>
-                  <span class="result">{{ exampleAge | ctxExpr }}</span>
-                </div>
-                <div class="pipe-item">
-                  <code>&#36;&#123;name&#125; | upper</code>
-                  <span class="arrow">➔</span>
-                  <span class="result">
-                    {{ exampleUpper | ctxExpr }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <div class="footer-note">
-            <p>NB-UI v1.0 // NO COMPROMISE</p>
+            <span class="current">{{ getUserData()?.dog?.breed }}</span>
           </div>
         </div>
-      </div>
+
+        <div class="section">
+          <h3 class="section-title">当前数据</h3>
+          <pre class="data-preview">{{ ctx.getAllData() | json }}</pre>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title">父组件表达式</h3>
+          <table class="expr-table">
+            <tr>
+              <td>user.name</td>
+              <td class="val">{{ sigUserName() }}</td>
+            </tr>
+            <tr>
+              <td>user.dog.name</td>
+              <td class="val">{{ sigDogName() }}</td>
+            </tr>
+            <tr>
+              <td>user.dog.age</td>
+              <td class="val">{{ sigDogAge() }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section">
+          <button
+            nz-button
+            nzType="dashed"
+            class="full-btn"
+            (click)="printRegistry()"
+          >
+            打印 Registry
+          </button>
+        </div>
+      </aside>
+
+      <!-- 右侧：子组件管理 -->
+      <main class="main">
+        <!-- Extra Scope 测试区域 -->
+        <app-extra-scope-test></app-extra-scope-test>
+        
+        <div class="divider" style="margin: 40px 0; border-top: 1px dashed #e8e8e8;"></div>
+
+        <div class="toolbar">
+          <h2 class="main-title">嵌套组件测试</h2>
+          <div class="toolbar-actions">
+            <button nz-button nzType="primary" (click)="addChild()">
+              + 添加子组件
+            </button>
+            <button
+              nz-button
+              nzType="default"
+              (click)="removeLastChild()"
+              [disabled]="childCount() === 0"
+            >
+              - 移除最后一个
+            </button>
+            <button
+              nz-button
+              nzType="default"
+              (click)="removeAllChildren()"
+              [disabled]="childCount() === 0"
+            >
+              清空全部
+            </button>
+          </div>
+        </div>
+
+        <div class="info-bar">
+          <span
+            >当前子组件数量: <strong>{{ childCount() }}</strong></span
+          >
+          <span
+            >父组件 ID: <code>{{ ctx.id() }}</code></span
+          >
+        </div>
+
+        <div class="children-container">
+          <app-nested-child
+            *ngFor="let child of children(); trackBy: trackChild"
+            [index]="child.index"
+            [list]="listConfig"
+          ></app-nested-child>
+
+          <div class="empty-state" *ngIf="childCount() === 0">
+            <p>暂无子组件</p>
+            <p class="hint">
+              点击"添加子组件"创建新的子组件，观察表达式依赖行为
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
   `,
   styles: [
     `
-      /* Neubrutalism Style */
-      @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@700;900&family=Space+Mono:wght@400;700&display=swap');
-
       :host {
-        --nb-bg: #fffbf0; /* Cream */
-        --nb-primary: #8b5cf6; /* Violet */
-        --nb-secondary: #f472b6; /* Pink */
-        --nb-accent: #34d399; /* Green */
-        --nb-border: #000;
-        --nb-shadow: 4px 4px 0 #000;
-        --nb-radius: 0;
-
         display: block;
         height: 100vh;
-        overflow: hidden;
-        background-color: var(--nb-bg);
-        color: #000;
-        font-family: 'Public Sans', sans-serif;
+        background: #f5f5f5;
       }
 
-      .neubrutal-container {
-        display: flex;
-        flex-direction: column;
+      .page {
+        display: grid;
+        grid-template-columns: 320px 1fr;
         height: 100%;
       }
 
-      /* Header */
-      .panel-header {
-        height: 80px;
-        flex-shrink: 0;
+      .sidebar {
         background: #fff;
-        border-bottom: 3px solid var(--nb-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-        z-index: 10;
-      }
-
-      .header-left {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .logo-box {
-        width: 48px;
-        height: 48px;
-        background: #000;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 900;
-        font-size: 20px;
-        border: 2px solid #000;
-        transform: rotate(-3deg);
-      }
-
-      .header-title {
-        font-size: 24px;
-        font-weight: 900;
-        text-transform: uppercase;
-        margin: 0;
-        letter-spacing: -1px;
-      }
-
-      /* Body Layout */
-      .panel-body {
-        flex: 1;
-        display: grid;
-        grid-template-columns: 380px 1fr;
-        overflow: hidden;
-      }
-
-      .panel-col {
-        padding: 24px;
+        border-right: 1px solid #e8e8e8;
+        padding: 20px;
         overflow-y: auto;
       }
 
-      .col-control {
-        background: #f1f5f9;
-        border-right: 3px solid var(--nb-border);
+      .section {
+        margin-bottom: 24px;
       }
 
-      .col-visual {
-        background: var(--nb-bg);
-      }
-
-      /* Cards */
-      .card-box {
-        background: #fff;
-        border: 3px solid var(--nb-border);
-        box-shadow: var(--nb-shadow);
-        margin-bottom: 32px;
-        transition: transform 0.1s;
-      }
-
-      .card-box:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: 6px 6px 0 #000;
-      }
-
-      .card-title {
-        background: #000;
-        color: #fff;
-        padding: 12px 16px;
-        font-family: 'Space Mono', monospace;
-        font-size: 14px;
-        font-weight: 700;
-        margin: 0;
-        border-bottom: 3px solid var(--nb-border);
-      }
-
-      .card-content {
-        padding: 20px;
-      }
-
-      /* Controls */
-      .control-row {
-        margin-bottom: 20px;
-      }
-
-      .control-row label {
-        display: block;
-        font-weight: 900;
+      .section-title {
         font-size: 12px;
-        margin-bottom: 8px;
+        font-weight: 600;
+        color: #666;
+        margin: 0 0 12px 0;
         text-transform: uppercase;
       }
 
-      .input-group {
+      .data-group {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f5f5f5;
+      }
+
+      .group-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 6px;
+        font-family: monospace;
+      }
+
+      .field-row {
         display: flex;
-        gap: 0;
-        margin-bottom: 8px;
+        gap: 8px;
+        margin-bottom: 4px;
       }
 
-      input[nz-input],
-      textarea[nz-input],
-      nz-input-number {
-        border: 2px solid var(--nb-border) !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        font-family: 'Space Mono', monospace;
-        font-size: 14px;
-        background: #fff;
+      .field-row input,
+      .field-row nz-input-number {
+        flex: 1;
       }
 
-      input[nz-input]:focus,
-      textarea[nz-input]:focus {
-        background: #fff0f5;
-      }
-
-      .btn-mini {
-        background: var(--nb-accent);
-        border: 2px solid var(--nb-border);
-        border-left: none;
-        font-weight: 900;
-        padding: 0 16px;
-        cursor: pointer;
-        transition: all 0.1s;
-      }
-
-      .btn-mini:hover {
-        background: #10b981;
-      }
-
-      .btn-mini:active {
-        background: #000;
-        color: #fff;
-      }
-
-      .btn-action {
-        background: #fff;
-        border: 2px solid var(--nb-border);
-        box-shadow: 2px 2px 0 #000;
-        padding: 10px 24px;
-        font-weight: 900;
-        cursor: pointer;
-        transition: all 0.1s;
-        text-transform: uppercase;
-      }
-
-      .btn-action.primary {
-        background: var(--nb-primary);
-        color: #fff;
-      }
-
-      .btn-action:hover {
-        transform: translate(-1px, -1px);
-        box-shadow: 3px 3px 0 #000;
-      }
-
-      .btn-action:active {
-        transform: translate(2px, 2px);
-        box-shadow: 0 0 0 #000;
-      }
-
-      .btn-action.full-width {
-        width: 100%;
-        margin: 12px 0;
-        background: var(--nb-secondary);
-      }
-
-      .value-tag {
-        display: inline-block;
-        background: #e2e8f0;
-        border: 2px solid #000;
-        padding: 4px 8px;
-        font-family: 'Space Mono', monospace;
+      .current {
         font-size: 12px;
-        font-weight: 700;
+        color: #1890ff;
+        font-family: monospace;
       }
 
-      .code-box {
-        background: #000;
-        color: #0f0;
+      .data-preview {
+        background: #fafafa;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
         padding: 12px;
-        font-family: 'Space Mono', monospace;
         font-size: 11px;
-        border: 2px solid #000;
+        font-family: monospace;
+        margin: 0;
         white-space: pre-wrap;
         word-break: break-all;
+        max-height: 200px;
+        overflow-y: auto;
       }
 
-      /* Pipes */
-      .pipe-list {
+      .expr-table {
+        width: 100%;
+        font-size: 12px;
+      }
+
+      .expr-table td {
+        padding: 6px 0;
+        border-bottom: 1px solid #f5f5f5;
+      }
+
+      .expr-table .val {
+        text-align: right;
+        font-family: monospace;
+        color: #1890ff;
+        font-weight: 500;
+      }
+
+      .full-btn {
+        width: 100%;
+      }
+
+      .main {
+        padding: 20px;
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 16px;
       }
 
-      .pipe-item {
+      .toolbar {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 16px;
-        padding: 12px;
-        background: #f8fafc;
-        border: 2px solid #000;
+        margin-bottom: 16px;
       }
 
-      .pipe-item code {
-        font-family: 'Space Mono', monospace;
-        background: #e2e8f0;
-        padding: 4px 8px;
-        font-weight: 700;
+      .main-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
       }
 
-      .arrow {
-        font-weight: 900;
+      .toolbar-actions {
+        display: flex;
+        gap: 8px;
       }
 
-      .result {
-        font-weight: 900;
-        color: var(--nb-primary);
-        font-size: 16px;
-        background: #ede9fe;
-        padding: 2px 6px;
-        border: 1px solid var(--nb-primary);
+      .info-bar {
+        display: flex;
+        gap: 24px;
+        padding: 10px 14px;
+        background: #e6f7ff;
+        border: 1px solid #91d5ff;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        font-size: 13px;
       }
 
-      .footer-note {
-        margin-top: 40px;
+      .info-bar code {
+        font-family: monospace;
+        background: #fff;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+
+      .children-container {
+        flex: 1;
+        min-height: 200px;
+      }
+
+      .empty-state {
         text-align: center;
-        font-family: 'Space Mono', monospace;
-        color: #666;
+        padding: 60px 20px;
+        color: #999;
+      }
+
+      .empty-state p {
+        margin: 0 0 8px 0;
+      }
+
+      .empty-state .hint {
         font-size: 12px;
-        opacity: 0.5;
+        color: #bbb;
+      }
+
+      .test-hints {
+        margin-top: 24px;
+        padding: 16px;
+        background: #fffbe6;
+        border: 1px solid #ffe58f;
+        border-radius: 4px;
+      }
+
+      .test-hints h4 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        color: #d48806;
+      }
+
+      .test-hints ul {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .test-hints li {
+        margin-bottom: 6px;
       }
     `,
   ],
 })
 export class DynamicExpressionParentComponent extends ContextHost {
   protected override contextType = 'parent';
-  protected override contextId = 'parent';
+  protected override contextId = 'nested-parent';
 
-  // 输入临时值
-  inputName = 'Alice';
-  inputAge = 25;
-  inputStatus = 'active';
-  bulkDataJson = `{"name":"Alice","age":25,"status":"active"}`;
+  inputUserName = '张三';
+  inputDogName = '旺财';
+  inputDogAge = 3;
+  inputDogBreed = '金毛';
 
-  /**
-   * DI 方式的表达式配置 (带计数器)
-   */
-  readonly diExpressions: ExpressionMap = {
-    name: '${(__exprCount.name++, name)}',
-    'age-name': '${(__exprCount.age++, age + name)}',
-    isAdult: "${(__exprCount.ageCheck++, age >= 18 ? '成年' : '未成年')}",
-    status:
-      "${(__exprCount.status++, status === 'active' ? '✅ 活跃' : '❌ 非活跃')}",
-  };
+  readonly children = signal<Array<{ id: string; index: number }>>([]);
+  readonly childCount = signal(0);
+  private childCounter = 0;
 
-  /**
-   * Input 方式的表达式配置 (不带计数器，用于对比)
-   */
-  readonly inputExpressions: ExpressionMap = {
-    name: '${name}',
-    age: '${age}',
-    isAdult: "${age >= 18 ? '成年' : '未成年'}",
-    status: "${status === 'active' ? '✅ 活跃' : '❌ 非活跃'}",
-  };
+  sigUserName = this.ctx.createExpressionSignal<string>('${user.name}');
+  sigDogName = this.ctx.createExpressionSignal<string>('${user.dog.name}');
+  sigDogAge = this.ctx.createExpressionSignal<number>('${user.dog.age}');
 
-  // 表达式模板变量 (绑定到模板以避免转义问题)
-  labelExpression = "${a} - ${b}岁 (${c ? '合格' : '不合格'})";
-  valueExpression = '${e}';
-  exampleName = '${name}';
-  exampleAge = '${age}';
-  exampleUpper = '${name} | upper';
-
-  /**
-   * 下拉列表选项 (Signal)
-   * 每个选项都有 a, b, c, d, e 字段
-   */
-  readonly selectOptions = signal<SelectOption[]>([
-    { a: '张三', b: 28, c: true, d: '工程师', e: 1001 },
-    { a: '李四', b: 35, c: false, d: '设计师', e: 1002 },
-    { a: '王五', b: 22, c: true, d: '产品', e: 1003 },
-    { a: '赵六', b: 45, c: true, d: '经理', e: 1004 },
-    { a: '钱七', b: 19, c: false, d: '实习生', e: 1005 },
+  // 列表配置：包含动态表达式（signal 类型）
+  readonly listConfig = signal<ListItemConfig[]>([
+    {
+      id: 'item1',
+      labelExpression: '${user.name}的操作项',
+      visibleExpression: '${user.dog.age > 0}',
+      disabledExpression: '${user.dog.age < 2}',
+    },
+    {
+      id: 'item2',
+      labelExpression: '${user.dog.name}的按钮',
+      visibleExpression: '${user.dog.breed === "金毛"}',
+    },
+    {
+      id: 'item3',
+      label: '静态标签项',
+      disabledExpression: '${user.age > 50}',
+    },
+    {
+      id: 'item4',
+      labelExpression: '狗龄: ${user.dog.age}岁',
+      visibleExpression: '${user.dog.age >= 3}',
+    },
   ]);
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this.ctx.setAllData(
-      {
-        name: 'Alice',
-        age: 25,
-        status: 'active',
+
+    this.ctx.setData('user', {
+      name: '张三',
+      age: 30,
+      dog: {
+        name: '旺财',
+        age: 3,
+        breed: '金毛',
+        color: '金色',
       },
-      { replace: true }
-    );
+    });
+
+    console.log('[Parent] 初始化完成, ID:', this.ctx.id());
   }
 
-  updateName(): void {
-    this.ctx.setData('name', this.inputName);
+  getUserData(): UserData | undefined {
+    return this.ctx.getData('user') as UserData | undefined;
   }
 
-  updateAge(): void {
-    this.ctx.setData('age', this.inputAge);
+  trackChild(_index: number, child: { id: string; index: number }): string {
+    return child.id;
   }
 
-  updateStatus(): void {
-    this.ctx.setData('status', this.inputStatus);
-  }
-
-  updateAllData(): void {
-    try {
-      const parsed = JSON.parse(this.bulkDataJson);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new Error('invalid');
-      }
-      this.ctx.setAllData(parsed as Record<string, any>, { replace: true });
-
-      if ('name' in parsed) this.inputName = (parsed as any).name ?? '';
-      if ('age' in parsed) this.inputAge = Number((parsed as any).age ?? 0);
-      if ('status' in parsed) this.inputStatus = (parsed as any).status ?? '';
-    } catch {
-      alert(
-        'JSON 无效：请输入对象，例如 {"name":"Alice","age":25,"status":"active"}'
-      );
+  updateUserName(): void {
+    const user = this.getUserData();
+    if (user) {
+      this.ctx.setData('user', { ...user, name: this.inputUserName });
+      console.log('[Parent] 修改 user.name =', this.inputUserName);
     }
   }
 
-  printCount(): void {
-    const count = (window as any).__exprCount;
-    console.log('===== 表达式执行次数统计 =====');
-    console.log('  ${name}:', count.name);
-    console.log('  ${age}:', count.age);
-    console.log('  ${age >= 18 ? ...}:', count.ageCheck);
-    console.log('  ${status === ...}:', count.status);
-    console.log(this.ctx);
+  updateDogName(): void {
+    const user = this.getUserData();
+    if (user) {
+      this.ctx.setData('user', {
+        ...user,
+        dog: { ...user.dog, name: this.inputDogName },
+      });
+      console.log('[Parent] 修改 dog.name =', this.inputDogName);
+    }
+  }
+
+  updateDogAge(): void {
+    const user = this.getUserData();
+    if (user) {
+      this.ctx.setData('user', {
+        ...user,
+        dog: { ...user.dog, age: this.inputDogAge },
+      });
+      console.log('[Parent] 修改 dog.age =', this.inputDogAge);
+    }
+  }
+
+  updateDogBreed(): void {
+    const user = this.getUserData();
+    if (user) {
+      this.ctx.setData('user', {
+        ...user,
+        dog: { ...user.dog, breed: this.inputDogBreed },
+      });
+      console.log('[Parent] 修改 dog.breed =', this.inputDogBreed);
+    }
+  }
+
+  addChild(): void {
+    this.childCounter++;
+    const newChild = {
+      id: `child-${this.childCounter}`,
+      index: this.childCounter,
+    };
+    this.children.update((list) => [...list, newChild]);
+    this.childCount.set(this.children().length);
+    console.log('[Parent] 添加子组件 #' + this.childCounter);
+  }
+
+  removeLastChild(): void {
+    const list = this.children();
+    if (list.length > 0) {
+      const removed = list[list.length - 1];
+      this.children.update((l) => l.slice(0, -1));
+      this.childCount.set(this.children().length);
+      console.log('[Parent] 移除子组件 #' + removed.index);
+    }
+  }
+
+  removeAllChildren(): void {
+    console.log('[Parent] 清空所有子组件');
+    this.children.set([]);
+    this.childCount.set(0);
+  }
+
+  printRegistry(): void {
+    const registry = (this.ctx as any).registry;
+    if (registry) {
+      console.log('===== Registry 状态 =====');
+      console.log('组件数量:', registry.size);
+      console.log('所有ID:', registry.getAllIds());
+      registry.getAll().forEach((ctx: any) => {
+        console.log(`  - ${ctx.id()} (${ctx.type()})`);
+      });
+    }
   }
 }
